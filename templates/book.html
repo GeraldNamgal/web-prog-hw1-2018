@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Book</title>
+    </head>
+    <body>
+        {{ book.title }} {{ book.author }} {{ book.year }} {{ book.isbn }}
+        <form id="reviewsForm" action="{{ url_for('book', bookId=book.id) }}" method="post">
+            <textarea name="review" rows="9" cols="70" placeholder="Enter Review Here"></textarea>
+            <button>Submit Review</button>
+        </form>
+    </body>
+</html>

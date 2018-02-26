@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Search</title>
+    </head>
+    <body>
+        <form id="searchForm" action="{{ url_for('search') }}" method="post">
+            <input type="text" name="isbn" placeholder="Enter ISBN Number">
+            <input type="text" name="title" placeholder="Enter Title">
+            <input type="text" name="author" placeholder="Enter Author">
+            <button>Search</button>
+        </form>
+        <ul>
+            {% for book in isbnQuery %}
+                  <li><a href="{{ url_for('book', bookId=book.id) }}">{{ book.title }}</a></li>
+            {% endfor %}
+
+            {% for book in titleQuery %}
+                  <li><a href="{{ url_for('book', bookId=book.id) }}">{{ book.title }}</a></li>
+            {% endfor %}
+
+            {% for book in authorQuery %}
+                  <li><a href="{{ url_for('book', bookId=book.id) }}">{{ book.title }}</a></li>
+            {% endfor %}
+
+            {% if message %}
+                {{ message }}
+            {% endif %}
+        </ul>
+    </body>
+</html>
