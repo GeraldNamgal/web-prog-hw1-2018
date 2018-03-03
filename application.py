@@ -1,7 +1,7 @@
 import os
 
 import requests, json
-from flask import Flask, session, render_template, request, redirect, url_for
+from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -32,10 +32,6 @@ def index():
         userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
     # Return index/main page
     return render_template("index.html", userInfo=userInfo)
-
-@app.route("/api/<string:isbn>")
-def isbnApi(isbn):
-    return render_template("isbnApi.html", isbn=isbn)
 
 @app.route("/registration", methods=["POST"])
 def registration():
@@ -205,17 +201,48 @@ def book(bookId):
         # If book is not in database, return a book-unavailable error
         if bookInfo is None:
             return render_template("error.html", message="That book is unavailable.")
-        # Retrieve reviews for the book
-        reviews = []
+        # Retrieve user reviews for the book
+        userReviews = []
         if engine.dialect.has_table(engine, "reviews"):
-            reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookId", {"bookId": bookId}).fetchall()
+            userReviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookId", {"bookId": bookId}).fetchall()
         # Get Goodreads ratings and reviews info
         res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "vH8L4fXjVtQkhdNVCeRQ", "isbns": bookInfo.isbn})
         # Return the book page for the book
-        if res.status_code != 404:
+        if res.status_code == 200:
             goodReadsData = json.loads(res.text)
-            # Return Goodreads data with book page if api request was found (no 404 error)
-            return render_template("book.html", book=bookInfo, reviews=reviews, res=res, goodReadsData=goodReadsData)
+            # Return Goodreads data with book page if api request returned ok
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, goodReadsData=goodReadsData)
         else:
-            # Don't return Goodreads data with book page if api request was not found (404 error)
-            return render_template("book.html", book=bookInfo, reviews=reviews, res=res)
+            # Don't return Goodreads data with book page if api request did not return ok
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res)
+
+@app.route("/api/<string:isbn>")
+def isbnApi(isbn):
+    book = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
+    # Return 404 if isbn isn't found
+    if book is None:
+        return jsonify({"Error": "ISBN could not be found."}), 404
+    else:
+        # TODO Get review count and average score for the book
+        reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookid", {"bookid": book.id})
+        # Find number of reviews and average rating for the book
+        numReviews = 0
+        numRatings = 0
+        ratingSum = 0
+        for review in reviews:
+            numReviews += 1
+            if review.rating is not None:
+                numRatings += 1
+                ratingSum = ratingSum + review.rating
+        if numRatings != 0:
+            avgRating = round((ratingSum / numRatings), 2)
+        else:
+            avgRating = None
+        # Return JSON
+        return jsonify({
+                "title": book.title,
+                "author": book.author,
+                "year": book.year,
+                "isbn": book.isbn,
+                "review_count": numReviews,
+                "average_score": avgRating})

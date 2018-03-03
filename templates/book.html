@@ -9,7 +9,7 @@
         <h2>Publication Year: {{ book.year }}</h2>
         <h2>ISBN: {{ book.isbn }}</h2>
 
-        {% if reviews %}
+        {% if userReviews %}
             <div id="userReviews">
                 <h3>Member Reviews</h3>
                 <table>
@@ -18,7 +18,7 @@
                         <th>Rating</th>
                         <th>Comment</th>
                     </tr>
-                    {% for review in reviews %}
+                    {% for review in userReviews %}
                         <tr>
                             <td>{{ review.username }}</td>
                             <td>{{ review.rating }}</td>
@@ -39,6 +39,11 @@
                 <h3>Goodreads Reviews</h3>
                 <p>Number of Ratings: {{ goodReadsData["books"][0]["work_ratings_count"] }}</p>
                 <p>Average Rating: {{ goodReadsData["books"][0]["average_rating"] }}</p>
+            </div>
+        {% else %}
+            <div>
+                <h3>Goodreads Reviews</h3>
+                <p>No Goodreads reviews found for this book.</p>
             </div>
         {% endif %}
 
