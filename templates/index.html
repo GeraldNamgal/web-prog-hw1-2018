@@ -7,18 +7,18 @@
         <h1>Welcome</h1>
         Welcome {{ userInfo.username }}
         <p>Please sign in or register.</p>
-        <form id="loginForm" action="{{ url_for('login') }}" method="post">
+        <form id="loginForm" action="{{ url_for("login") }}" method="post">
             <input type="text" name="username" placeholder="Username">
             <input type="text" name="password" placeholder="Password">
             <button>Log In</button>
         </form>
-        <form id="registrationForm" action="{{ url_for('registration') }}" method="post">
+        <form id="registrationForm" action="{{ url_for("registration") }}" method="post">
             <input type="text" name="name" placeholder="Enter Your Name">
             <input type="text" name="username" placeholder="Enter Your Username">
             <input type="text" name="password" placeholder="Enter Your Password">
             <button>Create Account</button>
         </form>
-        <form id="logoutForm" action="{{ url_for('logout') }}" method="post">
+        <form id="logoutForm" action="{{ url_for("logout") }}" method="post">
             <button>Log Out</button>
         </form>
     </body>

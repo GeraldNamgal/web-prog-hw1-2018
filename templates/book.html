@@ -4,10 +4,58 @@
         <title>Book</title>
     </head>
     <body>
-        {{ book.title }} {{ book.author }} {{ book.year }} {{ book.isbn }}
-        <form id="reviewsForm" action="{{ url_for('book', bookId=book.id) }}" method="post">
-            <textarea name="review" rows="9" cols="70" placeholder="Enter Review Here"></textarea>
-            <button>Submit Review</button>
-        </form>
+        <h1>{{ book.title }}</h1>
+        <h2>Author: {{ book.author }}</h2>
+        <h2>Publication Year: {{ book.year }}</h2>
+        <h2>ISBN: {{ book.isbn }}</h2>
+
+        {% if reviews %}
+            <div id="userReviews">
+                <h3>Member Reviews</h3>
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                    </tr>
+                    {% for review in reviews %}
+                        <tr>
+                            <td>{{ review.username }}</td>
+                            <td>{{ review.rating }}</td>
+                            <td>{{ review.comment }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            <div id="noReviews">
+                <h3>Member Reviews</h3>
+                <p>Be the first to review this book.</p>
+            </div>
+        {% endif %}
+
+        {% if goodReadsData %}
+            <div>
+                <h3>Goodreads Reviews</h3>
+                <p>Number of Ratings: {{ goodReadsData["books"][0]["work_ratings_count"] }}</p>
+                <p>Average Rating: {{ goodReadsData["books"][0]["average_rating"] }}</p>
+            </div>
+        {% endif %}
+
+        <div>
+            Enter a review:
+            <form id="reviewsForm" action="{{ url_for("book", bookId=book.id) }}" method="post">
+                <div id="ratingButtons">
+                    <input type="radio" name="rating" value="1"> 1
+                    <input type="radio" name="rating" value="2"> 2
+                    <input type="radio" name="rating" value="3"> 3
+                    <input type="radio" name="rating" value="4"> 4
+                    <input type="radio" name="rating" value="5"> 5
+                </div>
+                <textarea name="comment" rows="9" cols="70" placeholder="Enter Your Comments Here"></textarea>
+                <button>Submit Review</button>
+            </form>
+        </div>
+
     </body>
 </html>

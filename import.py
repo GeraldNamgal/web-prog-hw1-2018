@@ -28,7 +28,7 @@ def main():
             next(reader)
             for isbn, title, author, year in reader:
                 db.execute("INSERT INTO books (isbn, title, author, year) VALUES (:isbn, :title, :author, :year)",
-                        {"isbn": isbn, "title": title, "author": author, "year": year})
+                            {"isbn": isbn, "title": title, "author": author, "year": year})
             db.commit()
     # If table already exists then "books.csv" was already loaded
     else:

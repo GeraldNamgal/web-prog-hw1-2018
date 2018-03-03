@@ -1,5 +1,6 @@
 import os
 
+import requests, json
 from flask import Flask, session, render_template, request, redirect, url_for
 from flask_session import Session
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
@@ -25,7 +26,11 @@ db = scoped_session(sessionmaker(bind=engine))
 def index():
     if session.get("userId") is None:
         session["userId"] = 0
-    userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
+    # Retrieve user info if a user is signed in
+    userInfo=[]
+    if engine.dialect.has_table(engine, "users"):
+        userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
+    # Return index/main page
     return render_template("index.html", userInfo=userInfo)
 
 @app.route("/api/<string:isbn>")
@@ -45,7 +50,7 @@ def registration():
     # If username already exists, return error page; first check if there is a users table
     if engine.dialect.has_table(engine, "users"):
         if db.execute("SELECT username FROM users WHERE lower(username) = :username",
-                {"username": username.lower()}).fetchone() is not None:
+                        {"username": username.lower()}).fetchone() is not None:
             return render_template("error.html", message="Username already exists.")
 
     # TODO: Anything else constitute an invalid username?
@@ -64,7 +69,7 @@ def registration():
     name = request.form.get("name")
     password = request.form.get("password")
     db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :password)",
-            {"name": name, "username": username, "password": password})
+                {"name": name, "username": username, "password": password})
     db.commit()
     # Return registered page after user is registered successfully
     return render_template("registered.html")
@@ -80,7 +85,7 @@ def login():
     if engine.dialect.has_table(engine, "users"):
         # Retrieve the user's data if there is any via username; use lower() for string comparing
         userInfo = db.execute("SELECT * FROM users WHERE lower(username) = :username",
-                {"username": username.lower()}).fetchone()
+                                {"username": username.lower()}).fetchone()
         # If username exists in database
         if userInfo is not None:
             # Check that password matches database's
@@ -127,42 +132,90 @@ def search():
             # For each query, check that criteria is not empty as to not return everything
             if isbn is not "":
                 isbnQuery = db.execute("SELECT * FROM books WHERE lower(isbn) LIKE :isbn",
-                        {"isbn": "%"+isbn.lower()+"%"}).fetchall()
+                                        {"isbn": "%"+isbn.lower()+"%"}).fetchall()
             if title is not "":
                 titleQuery = db.execute("SELECT * FROM books WHERE lower(title) LIKE :title",
-                        {"title": "%"+title.lower()+"%"}).fetchall()
+                                        {"title": "%"+title.lower()+"%"}).fetchall()
             if author is not "":
                 authorQuery = db.execute("SELECT * FROM books WHERE lower(author) LIKE :author",
-                        {"author": "%"+author.lower()+"%"}).fetchall()
+                                        {"author": "%"+author.lower()+"%"}).fetchall()
         # If the searching returned empty, return a message
         if not isbnQuery and not titleQuery and not authorQuery:
             return render_template("search.html", message="Your search returned no results.")
         else:
             return render_template("search.html", isbnQuery=isbnQuery, titleQuery=titleQuery, authorQuery=authorQuery)
+    # if request method was GET or anything else besides POST
     else:
         return render_template("search.html")
 
 @app.route("/book/<int:bookId>", methods=["POST", "GET"])
 def book(bookId):
     if request.method == "POST":
-
-        # TODO: Check that user didn't already comment on this book
-
-        # Insert new review into database; create a reviews table if doesn't exist already
+        # Retrieve the session "userId" to see who is signed in
+        if session.get("userId") is None:
+            session["userId"] = 0
+        # If a user isn't signed in, return a must-sign-in error page
+        if session["userId"] == 0:
+            return render_template("reviewAlert.html", message="Please sign in to review this book.",
+                                    alert="Error", bookId=bookId)
+        # If user already reviewed this book, return an error page
+        if engine.dialect.has_table(engine, "reviews"):
+            if db.execute("SELECT * FROM reviews WHERE bookId = :bookId AND reviewer = :reviewer",
+                            {"bookId": bookId, "reviewer": session["userId"]}).rowcount != 0:
+                return render_template("reviewAlert.html", message="You already reviewed this book.",
+                                        alert="Error", bookId=bookId)
+        # Insert new review into database; create a reviews table first if it doesn't exist already
         if not engine.dialect.has_table(engine, "reviews"):
             metadata = MetaData(engine)
             Table("reviews", metadata,
                 Column("id", Integer, primary_key=True),
-                Column("userId", Integer),
-                Column("review", String(500)),
-                Column("bookId", Integer))
+                Column("reviewer", Integer),
+                Column("username", String(30)),
+                Column("rating", Integer),
+                Column("comment", String(500)),
+                Column("bookid", Integer))
             metadata.create_all()
-        # Retrieve review from form, stripping away leading and trailing spaces
-        review = request.form.get("review").strip()
-        db.execute("INSERT INTO reviews (userId, review, bookId) VALUES (:userId, :review, :bookId)",
-                {"userId": session["userId"], "review": review, "bookId": bookId})
+        # Retrieve rating and comment from form, stripping away leading and trailing spaces
+        rating = request.form.get("rating")
+        comment = request.form.get("comment").strip()
+        # If user neither entered a comment or rating, return an error page
+        if rating is None and comment == "":
+            return render_template("reviewAlert.html", message="Please enter a rating and/or comment.",
+                                    alert="Error", bookId=bookId)
+        # Retrieve user's username
+        username = ""
+        if engine.dialect.has_table(engine, "users"):
+            username = db.execute("SELECT * FROM users WHERE id = :reviewerId",
+                                    {"reviewerId": session["userId"]}).fetchone().username
+        # Inserting review; check if rating is not None as to not return a NoneType insert error
+        if rating is not None:
+            db.execute("INSERT INTO reviews (reviewer, rating, comment, username, bookid) VALUES (:reviewer, :rating, :comment, :username, :bookid)",
+                        {"reviewer": session["userId"], "rating": int(rating), "comment": comment, "username": username, "bookid": bookId})
+        else:
+            db.execute("INSERT INTO reviews (reviewer, comment, username, bookid) VALUES (:reviewer, :comment, :username, :bookid)",
+                        {"reviewer": session["userId"], "comment": comment, "username": username, "bookid": bookId})
         db.commit()
-        return render_template("book.html")
+        # Return an alert page that review was successfully submitted
+        return render_template("reviewAlert.html", message="Your review has been submitted.",
+                                alert="Success", bookId=bookId)
+    # If request method was GET or anything else besides POST
     else:
+        # Retrieve book information
         bookInfo = db.execute("SELECT * FROM books WHERE id = :bookId", {"bookId": bookId}).fetchone()
-        return render_template("book.html", book=bookInfo)
+        # If book is not in database, return a book-unavailable error
+        if bookInfo is None:
+            return render_template("error.html", message="That book is unavailable.")
+        # Retrieve reviews for the book
+        reviews = []
+        if engine.dialect.has_table(engine, "reviews"):
+            reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookId", {"bookId": bookId}).fetchall()
+        # Get Goodreads ratings and reviews info
+        res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "vH8L4fXjVtQkhdNVCeRQ", "isbns": bookInfo.isbn})
+        # Return the book page for the book
+        if res.status_code != 404:
+            goodReadsData = json.loads(res.text)
+            # Return Goodreads data with book page if api request was found (no 404 error)
+            return render_template("book.html", book=bookInfo, reviews=reviews, res=res, goodReadsData=goodReadsData)
+        else:
+            # Don't return Goodreads data with book page if api request was not found (404 error)
+            return render_template("book.html", book=bookInfo, reviews=reviews, res=res)
