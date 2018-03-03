@@ -1,0 +1,52 @@
+body {
+    background-color: BurlyWood;
+    font-family: serif;
+    margin: 20px;
+}
+
+h1 {
+    color: firebrick;
+    text-align:center;
+    font-style: oblique;
+    font-weight: bold;
+}
+
+nav {
+    border: 1px solid black;
+    background-color: bisque;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+a:hover {
+    background-color: white;
+}
+
+table {
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: auto;
+    margin: auto;
+}
+th, td {
+    border: 1px solid black;
+    padding: 5px;
+}
+th {
+    background-color: lightgray;
+}
+td {
+    background-color: SeaShell;
+}
+
+#bookList {
+    border: 1px solid black;
+    padding-top: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: white;
+}
+
+#userReviews {
+    text-align: center;
+}

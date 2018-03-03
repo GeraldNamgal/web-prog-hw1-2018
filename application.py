@@ -48,11 +48,7 @@ def registration():
         if db.execute("SELECT username FROM users WHERE lower(username) = :username",
                         {"username": username.lower()}).fetchone() is not None:
             return render_template("error.html", message="Username already exists.")
-
-    # TODO: Anything else constitute an invalid username?
-
-    # If username passes validation, add new user's information to database
-    # Create a users table if one doesn't already exist
+    # Add new user's information to database; create a users table first if one doesn't exist yet
     if not engine.dialect.has_table(engine, "users"):
         metadata = MetaData(engine)
         Table("users", metadata,
@@ -223,7 +219,7 @@ def isbnApi(isbn):
     if book is None:
         return jsonify({"Error": "ISBN could not be found."}), 404
     else:
-        # TODO Get review count and average score for the book
+        # Get review count and average score for the book
         reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookid", {"bookid": book.id})
         # Find number of reviews and average rating for the book
         numReviews = 0

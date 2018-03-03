@@ -1,29 +1,49 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/styles.css") }}">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Search</title>
     </head>
     <body>
+        <!-- Using a Bootstrap component for navigation -->
+        <nav>
+            <ul class="nav justify-content-center">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for("search") }}">| Search |</a>
+                </li>
+            </ul>
+        </nav>
+
         <form id="searchForm" action="{{ url_for("search") }}" method="post">
             <input type="text" name="isbn" placeholder="Enter ISBN Number">
             <input type="text" name="title" placeholder="Enter Title">
             <input type="text" name="author" placeholder="Enter Author">
             <button>Search</button>
         </form>
-        <ul>
-            {% for book in isbnQuery %}
-                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-            {% endfor %}
 
-            {% for book in titleQuery %}
-                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-            {% endfor %}
+        {% if isbnQuery or titleQuery or authorQuery %}
+            <div class="col-4">
+                <div id="bookList">
+                    <ul>
+                        {% for book in isbnQuery %}
+                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                        {% endfor %}
 
-            {% for book in authorQuery %}
-                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-            {% endfor %}
+                        {% for book in titleQuery %}
+                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                        {% endfor %}
 
-            {{ message }}
-        </ul>
+                        {% for book in authorQuery %}
+                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <p>{{ message }}</p>
+        {% endif %}
     </body>
 </html>
