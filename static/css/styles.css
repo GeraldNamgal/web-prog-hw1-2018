@@ -47,6 +47,19 @@ td {
     background-color: white;
 }
 
-#userReviews {
+#bookDetails {
+    text-align: center;
+}
+
+/* Code from: https://stackoverflow.com/questions/19323974/targeting-first-2-children-or-last-2-children */
+#userReviews h3, th, tr td:nth-child(-n + 2) {
+    text-align: center;
+}
+
+.goodreadsReviews {
+    background-color: DarkOliveGreen;
+}
+
+.goodreadsReviews h3 {
     text-align: center;
 }

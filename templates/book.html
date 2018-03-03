@@ -17,10 +17,12 @@
             </ul>
         </nav>
 
-        <h1>{{ book.title }}</h1>
-        <h2>Author: {{ book.author }}</h2>
-        <h2>Publication Year: {{ book.year }}</h2>
-        <h2>ISBN: {{ book.isbn }}</h2>
+        <div id=bookDetails>
+            <h1>{{ book.title }}</h1>
+            <h2>Author: {{ book.author }}</h2>
+            <h2>Publication Year: {{ book.year }}</h2>
+            <h2>ISBN: {{ book.isbn }}</h2>
+        </div>
 
         {% if userReviews %}
             <div id="userReviews">
@@ -48,15 +50,21 @@
         {% endif %}
 
         {% if goodReadsData %}
-            <div>
-                <h3>Goodreads Reviews</h3>
-                <p>Number of Ratings: {{ goodReadsData["books"][0]["work_ratings_count"] }}</p>
-                <p>Average Rating: {{ goodReadsData["books"][0]["average_rating"] }}</p>
+            <div class="col-4">
+                <div class="goodreadsReviews">
+                    <h3>Goodreads Reviews</h3>
+                    <ul>
+                        <li>Number of Ratings: {{ goodReadsData["books"][0]["work_ratings_count"] }}</li>
+                        <li>Average Rating: {{ goodReadsData["books"][0]["average_rating"] }}</li>
+                    </ul>
+                </div>
             </div>
         {% else %}
-            <div>
-                <h3>Goodreads Reviews</h3>
-                <p>No Goodreads reviews found for this book.</p>
+            <div class="col-3">
+                <div class="goodreadsReviews">
+                    <h3>Goodreads Reviews</h3>
+                    <p>No Goodreads reviews found for this book.</p>
+                </div>
             </div>
         {% endif %}
 
