@@ -8,7 +8,6 @@
         <title>Search</title>
     </head>
     <body>
-        <!-- Using a Bootstrap component for navigation -->
         <nav>
             <ul class="nav justify-content-center">
                 <li class="nav-item">
@@ -41,29 +40,29 @@
                 <button>Search</button>
             </form>
         </div>
-        {% if isbnQuery or titleQuery or authorQuery %}
-            <div class="col-4">
-                <div id="bookList">
-                    <ul>
-                        {% for book in isbnQuery %}
-                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-                        {% endfor %}
-
-                        {% for book in titleQuery %}
-                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-                        {% endfor %}
-
-                        {% for book in authorQuery %}
-                              <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
-                        {% endfor %}
-                    </ul>
+        <div id="searchResults">
+            {% if isbnQuery or titleQuery or authorQuery %}
+                <div class="col-4">
+                    <div id="bookList">
+                        <ul>
+                            {% for book in isbnQuery %}
+                                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                            {% endfor %}
+                            {% for book in titleQuery %}
+                                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                            {% endfor %}
+                            {% for book in authorQuery %}
+                                  <li><a href="{{ url_for("book", bookId=book.id) }}">{{ book.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        {% else %}
-            <p>{{ message }}</p>
-        {% endif %}
+            {% else %}
+                <p>{{ message }}</p>
+            {% endif %}
+        </div>
         <div class="notes">
-            <h6 style="text-decoration:underline">Notes</h6>
+            <h6 style="font-style:italic">Notes:</h6>
             <ul>
                 <li>To use the ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</li>
             <ul>

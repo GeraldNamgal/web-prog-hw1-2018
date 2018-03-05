@@ -21,12 +21,18 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
+# Global variables
+nameLen = 30
+usernameLen = 30
+passwordLen = 20
+commentLen = 1000
+nonUser = 0
 
 @app.route("/")
 def index():
     # Retrieve user info if a user is signed in
     if session.get("userId") is None:
-        session["userId"] = 0
+        session["userId"] = nonUser
     userInfo=[]
     if engine.dialect.has_table(engine, "users"):
         userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
@@ -41,8 +47,8 @@ def registration():
     if username == "":
         return render_template("alert.html", alert="Error", message="Please enter a username.", returnLocation="/")
     # If username exceeds max char count return error page
-    if len(username) > 30:
-        return render_template("alert.html", alert="Error", message="Please enter a username shorter than 31 characters.", returnLocation="/")
+    if len(username) > usernameLen:
+        return render_template("alert.html", alert="Error", message=f"Username must not be more than {usernameLen} characters.", returnLocation="/")
     # If username contains spaces, return error page
     if (" " in username) == True:
         return render_template("alert.html", alert="Error", message="Please choose a username without spaces.", returnLocation="/")
@@ -56,21 +62,25 @@ def registration():
         metadata = MetaData(engine)
         Table("users", metadata,
             Column("id", Integer, primary_key=True),
-            Column("name", String(30)),
-            Column("username", String(30)),
-            Column("password", String(20)))
+            Column("name", String(nameLen)),
+            Column("username", String(usernameLen), nullable=False),
+            Column("password", String(passwordLen)))
         metadata.create_all()
+        # Check that table was created
+        if not engine.dialect.has_table(engine, "users"):
+            return render_template("alert.html", alert="Error", message="Database error occurred. Please try again later.", returnLocation="/")
     # Retrieve name and password
-    name = request.form.get("name")
+    name = request.form.get("name").strip()
     password = request.form.get("password")
     # If name or password exceed max char length, return error page
-    if len(name) > 30:
-        return render_template("alert.html", alert="Error", message="Please enter a name shorter than 31 characters.", returnLocation="/")
-    if len(password) > 20:
-        return render_template("alert.html", alert="Error", message="Please enter a password shorter than 21 characters.", returnLocation="/")
+    if len(name) > nameLen:
+        return render_template("alert.html", alert="Error", message=f"Name must not be more than {nameLen} characters.", returnLocation="/")
+    if len(password) > passwordLen:
+        return render_template("alert.html", alert="Error", message=f"Password must not be more than {passwordLen} characters.", returnLocation="/")
     # Inserting new user into the database
-    db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :password)",
-                {"name": name, "username": username, "password": password})
+    if engine.dialect.has_table(engine, "users"):
+        db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :password)",
+                    {"name": name, "username": username, "password": password})
     db.commit()
     # Return registered page after user is registered successfully
     return render_template("alert.html", alert="Success", message="You've registered an account.", returnLocation="/")
@@ -94,7 +104,7 @@ def login():
             if userInfo.password == password:
                 # Set the session for the user
                 if session.get("userId") is None:
-                    session["userId"] = 0
+                    session["userId"] = nonUser
                 session["userId"] = userInfo.id
                 # Return search page
                 return redirect(url_for("search"))
@@ -109,16 +119,16 @@ def login():
 def logout():
     # Unset the user's session
     if session.get("userId") is None:
-        session["userId"] = 0
+        session["userId"] = nonUser
     else:
-        session["userId"] = 0
+        session["userId"] = nonUser
     return render_template("alert.html", alert="Success", message="You are logged out.", returnLocation="/")
 
 @app.route("/search", methods=["POST", "GET"])
 def search():
     # Retrieve user info if a user is signed in
     if session.get("userId") is None:
-        session["userId"] = 0
+        session["userId"] = nonUser
     userInfo=[]
     if engine.dialect.has_table(engine, "users"):
         userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
@@ -159,14 +169,14 @@ def search():
 def book(bookId):
     # Retrieve user info if a user is signed in
     if session.get("userId") is None:
-        session["userId"] = 0
+        session["userId"] = nonUser
     userInfo=[]
     if engine.dialect.has_table(engine, "users"):
         userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
     # If request method was POST
     if request.method == "POST":
         # If a user isn't signed in, return a must-sign-in error page
-        if session["userId"] == 0:
+        if session["userId"] == nonUser:
             return render_template("alert.html", alert="Error", message="Please sign in to review this book.", returnLocation=f"/book/{bookId}")
         # If user already reviewed this book, return an error page
         if engine.dialect.has_table(engine, "reviews"):
@@ -178,12 +188,15 @@ def book(bookId):
             metadata = MetaData(engine)
             Table("reviews", metadata,
                 Column("id", Integer, primary_key=True),
-                Column("reviewer", Integer),
-                Column("username", String(30)),
+                Column("reviewer", Integer, nullable=False),
+                Column("username", String(usernameLen)),
                 Column("rating", Integer),
-                Column("comment", String(500)),
-                Column("bookid", Integer))
+                Column("comment", String(commentLen)),
+                Column("bookid", Integer, nullable=False))
             metadata.create_all()
+            # Check that table was created
+            if not engine.dialect.has_table(engine, "reviews"):
+                return render_template("alert.html", alert="Error", message="Database error occurred. Please try again later.", returnLocation=f"/book/{bookId}")
         # Retrieve rating and comment from form, stripping away leading and trailing spaces
         rating = request.form.get("rating")
         comment = request.form.get("comment").strip()
@@ -191,27 +204,30 @@ def book(bookId):
         if rating is None and comment == "":
             return render_template("alert.html", alert="Error", message="Please enter a rating and/or comment.", returnLocation=f"/book/{bookId}")
         # If comment exceeds max char length, return error page
-        if len(comment) > 500:
-            return render_template("alert.html", alert="Error", message="Please enter a comment shorter than 501 characters.", returnLocation=f"/book/{bookId}")
+        if len(comment) > commentLen:
+            return render_template("alert.html", alert="Error", message=f"Comment must not be more than {commentLen} characters.", returnLocation=f"/book/{bookId}")
         # Retrieve user's username
         username = ""
         if engine.dialect.has_table(engine, "users"):
             username = db.execute("SELECT * FROM users WHERE id = :reviewerId",
                                     {"reviewerId": session["userId"]}).fetchone().username
         # Inserting review; check if rating is not None as to not return a NoneType insert error
-        if rating is not None:
-            db.execute("INSERT INTO reviews (reviewer, rating, comment, username, bookid) VALUES (:reviewer, :rating, :comment, :username, :bookid)",
-                        {"reviewer": session["userId"], "rating": int(rating), "comment": comment, "username": username, "bookid": bookId})
-        else:
-            db.execute("INSERT INTO reviews (reviewer, comment, username, bookid) VALUES (:reviewer, :comment, :username, :bookid)",
-                        {"reviewer": session["userId"], "comment": comment, "username": username, "bookid": bookId})
+        if engine.dialect.has_table(engine, "reviews"):
+            if rating is not None:
+                db.execute("INSERT INTO reviews (reviewer, rating, comment, username, bookid) VALUES (:reviewer, :rating, :comment, :username, :bookid)",
+                            {"reviewer": session["userId"], "rating": int(rating), "comment": comment, "username": username, "bookid": bookId})
+            else:
+                db.execute("INSERT INTO reviews (reviewer, comment, username, bookid) VALUES (:reviewer, :comment, :username, :bookid)",
+                            {"reviewer": session["userId"], "comment": comment, "username": username, "bookid": bookId})
         db.commit()
         # Return an alert page that review was successfully submitted
         return render_template("alert.html", alert="Success", message="Your review has been submitted.", returnLocation=f"/book/{bookId}")
     # If request method was GET or anything else besides POST
     else:
         # Retrieve book information
-        bookInfo = db.execute("SELECT * FROM books WHERE id = :bookId", {"bookId": bookId}).fetchone()
+        bookInfo = None
+        if engine.dialect.has_table(engine, "books"):
+            bookInfo = db.execute("SELECT * FROM books WHERE id = :bookId", {"bookId": bookId}).fetchone()
         # If book is not in database, return a book-unavailable error
         if bookInfo is None:
             return render_template("alert.html", alert="Error", message="That book is unavailable.", returnLocation="/search")
@@ -232,13 +248,18 @@ def book(bookId):
 
 @app.route("/api/<string:isbn>")
 def isbnApi(isbn):
-    book = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
+    # Retrieve book information from isbn
+    book = None
+    if engine.dialect.has_table(engine, "books"):
+        book = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
     # Return 404 if isbn isn't found
     if book is None:
         return jsonify({"Error": "ISBN could not be found."}), 404
     else:
         # Get review count and average score for the book
-        reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookid", {"bookid": book.id})
+        reviews = []
+        if engine.dialect.has_table(engine, "reviews"):
+            reviews = db.execute("SELECT * FROM reviews WHERE bookid = :bookid", {"bookid": book.id})
         # Find number of reviews and average rating for the book
         numReviews = 0
         numRatings = 0
