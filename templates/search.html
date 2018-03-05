@@ -12,17 +12,38 @@
         <nav>
             <ul class="nav justify-content-center">
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for("search") }}">| Search |</a>
+                    <a class="nav-link active" href="{{ url_for("index") }}">| Home |</a>
                 </li>
+                {% if userInfo %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("index") }}">| Register |</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("logout") }}">| Log Out |</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("index") }}">| Log In / Register |</a>
+                    </li>
+                {% endif %}
             </ul>
         </nav>
 
-        <form id="searchForm" action="{{ url_for("search") }}" method="post">
-            <input type="text" name="isbn" placeholder="Enter ISBN Number">
-            <input type="text" name="title" placeholder="Enter Title">
-            <input type="text" name="author" placeholder="Enter Author">
-            <button>Search</button>
-        </form>
+        <h1>Search</h1>
+
+        {% if userInfo %}
+            <h5>Hello, {{ userInfo.username }}!</h5>
+        {% endif %}
+
+        <div id="searchForm">
+            <h6>Search for a book:</h6>
+            <form id="searchForm" action="{{ url_for("search") }}" method="post">
+                <input type="text" name="isbn" placeholder="Enter ISBN Number">
+                <input type="text" name="title" placeholder="Enter Title">
+                <input type="text" name="author" placeholder="Enter Author">
+                <button>Search</button>
+            </form>
+        </div>
 
         {% if isbnQuery or titleQuery or authorQuery %}
             <div class="col-4">
@@ -45,5 +66,7 @@
         {% else %}
             <p>{{ message }}</p>
         {% endif %}
+
+        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</p>
     </body>
 </html>

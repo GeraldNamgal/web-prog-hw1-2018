@@ -12,8 +12,23 @@
         <nav>
             <ul class="nav justify-content-center">
                 <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for("index") }}">| Home |</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link active" href="{{ url_for("search") }}">| Search |</a>
                 </li>
+                {% if userInfo %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("index") }}">| Register |</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("logout") }}">| Log Out |</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("index") }}">| Log In / Register |</a>
+                    </li>
+                {% endif %}
             </ul>
         </nav>
 
@@ -25,8 +40,8 @@
         </div>
 
         {% if userReviews %}
-            <div id="userReviews">
-                <h3>Member Reviews</h3>
+            <div class="userReviews">
+                <h4 style="text-align:center;font-style:italic">Member Reviews</h4>
                 <table>
                     <tr>
                         <th>Name</th>
@@ -43,33 +58,18 @@
                 </table>
             </div>
         {% else %}
-            <div id="noReviews">
-                <h3>Member Reviews</h3>
-                <p>Be the first to review this book.</p>
+            <div class="userReviews">
+                <h4 style="text-align:center;font-style:italic">Member Reviews</h4>
+                <p style="text-align:center">Be the first to review this book.</p>
             </div>
         {% endif %}
 
-        {% if goodReadsData %}
-            <div class="col-4">
-                <div class="goodreadsReviews">
-                    <h3>Goodreads Reviews</h3>
-                    <ul>
-                        <li>Number of Ratings: {{ goodReadsData["books"][0]["work_ratings_count"] }}</li>
-                        <li>Average Rating: {{ goodReadsData["books"][0]["average_rating"] }}</li>
-                    </ul>
-                </div>
-            </div>
-        {% else %}
-            <div class="col-3">
-                <div class="goodreadsReviews">
-                    <h3>Goodreads Reviews</h3>
-                    <p>No Goodreads reviews found for this book.</p>
-                </div>
-            </div>
+        {% if userInfo %}
+            <h5>Hello, {{ userInfo.username }}!</h5>
         {% endif %}
 
         <div>
-            Enter a review:
+            <h6>Enter a review:</h6>
             <form id="reviewsForm" action="{{ url_for("book", bookId=book.id) }}" method="post">
                 <div id="ratingButtons">
                     <input type="radio" name="rating" value="1"> 1
@@ -83,5 +83,27 @@
             </form>
         </div>
 
+        {% if goodReadsData %}
+            <div class="goodreadsReviews">
+                <h4 style="text-align:center;font-style:italic">Goodreads Reviews</h4>
+                <table>
+                    <tr>
+                        <th>Number of Ratings</th>
+                        <th>Average Rating</th>
+                    </tr>
+                    <tr>
+                        <td>{{ goodReadsData["books"][0]["work_ratings_count"] }}</td>
+                        <td>{{ goodReadsData["books"][0]["average_rating"] }}</td>
+                    </tr>
+                </table>
+            </div>
+        {% else %}
+            <div class="goodreadsReviews">
+                <h4 style="text-align:center;font-style:italic">Goodreads Reviews</h4>
+                <p style="text-align:center">No Goodreads reviews found for this book.</p>
+            </div>
+        {% endif %}
+
+        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn number]" into the URL.</p>
     </body>
 </html>

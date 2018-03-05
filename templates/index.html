@@ -5,38 +5,52 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="{{ url_for("static", filename="css/styles.css") }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>My Website</title>
+        <title>Books</title>
     </head>
     <body>
-        <h1>Welcome</h1>
         <!-- Using a Bootstrap component for navigation -->
         <nav>
             <ul class="nav justify-content-center">
                 <li class="nav-item">
                     <a class="nav-link active" href="{{ url_for("search") }}">| Search |</a>
                 </li>
+                {% if userInfo %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for("logout") }}">| Log Out |</a>
+                    </li>
+                {% endif %}
             </ul>
         </nav>
 
-        Welcome, {{ userInfo.username }}!
+        <h1>Welcome</h1>
 
-        <p>Please sign in or register.</p>
+        {% if userInfo %}
+            <h5>Hello, {{ userInfo.username }}!</h5>
+        {% endif %}
 
-        <form id="loginForm" action="{{ url_for("login") }}" method="post">
-            <input type="text" name="username" placeholder="Username">
-            <input type="text" name="password" placeholder="Password">
-            <button>Log In</button>
-        </form>
+        <div id="loginAndRegForm">
+            {% if userInfo %}
+                <h6>Register another username:</h6>
+            {% else %}
+                <h6>Please sign in or register an account:</h6>
+            {% endif %}
 
-        <form id="registrationForm" action="{{ url_for("registration") }}" method="post">
-            <input type="text" name="name" placeholder="Enter Your Name">
-            <input type="text" name="username" placeholder="Enter Your Username">
-            <input type="text" name="password" placeholder="Enter Your Password">
-            <button>Create Account</button>
-        </form>
+            {% if not userInfo %}
+                <form id="loginForm" action="{{ url_for("login") }}" method="post">
+                    <input type="text" name="username" placeholder="Username">
+                    <input type="text" name="password" placeholder="Password">
+                    <button>Log In</button>
+                </form>
+            {% endif %}
 
-        <form id="logoutForm" action="{{ url_for("logout") }}" method="post">
-            <button>Log Out</button>
-        </form>
+            <form id="registrationForm" action="{{ url_for("registration") }}" method="post">
+                <input type="text" name="name" placeholder="Enter Your Name">
+                <input type="text" name="username" placeholder="Enter Your Username">
+                <input type="text" name="password" placeholder="Enter Your Password">
+                <button>Register Account</button>
+            </form>
+        </div>
+
+        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</p>
     </body>
 </html>

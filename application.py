@@ -24,9 +24,9 @@ db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
 def index():
+    # Retrieve user info if a user is signed in
     if session.get("userId") is None:
         session["userId"] = 0
-    # Retrieve user info if a user is signed in
     userInfo=[]
     if engine.dialect.has_table(engine, "users"):
         userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
@@ -39,15 +39,15 @@ def registration():
     username = request.form.get("username").strip()
     # If username is blank, return error page
     if username == "":
-        return render_template("error.html", message="Please enter a username.")
+        return render_template("alert.html", alert="Error", message="Please enter a username.", returnLocation="/")
     # If username contains spaces, return error page
     if (" " in username) == True:
-        return render_template("error.html", message="Please choose a username without spaces.")
+        return render_template("alert.html", alert="Error", message="Please choose a username without spaces.", returnLocation="/")
     # If username already exists, return error page; first check if there is a users table
     if engine.dialect.has_table(engine, "users"):
         if db.execute("SELECT username FROM users WHERE lower(username) = :username",
                         {"username": username.lower()}).fetchone() is not None:
-            return render_template("error.html", message="Username already exists.")
+            return render_template("alert.html", alert="Error", message="Username already exists.", returnLocation="/")
     # Add new user's information to database; create a users table first if one doesn't exist yet
     if not engine.dialect.has_table(engine, "users"):
         metadata = MetaData(engine)
@@ -64,7 +64,7 @@ def registration():
                 {"name": name, "username": username, "password": password})
     db.commit()
     # Return registered page after user is registered successfully
-    return render_template("registered.html")
+    return render_template("alert.html", alert="Success", message="You've registered an account.", returnLocation="/")
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -72,7 +72,7 @@ def login():
     username = request.form.get("username").strip()
     # If username is blank, return error page
     if username == "":
-        return render_template("error.html", message="Please enter a username.")
+        return render_template("alert.html", alert="Error", message="Please enter a username.", returnLocation="/")
     # Check if username exists; first check if a users table exists
     if engine.dialect.has_table(engine, "users"):
         # Retrieve the user's data if there is any via username; use lower() for string comparing
@@ -90,23 +90,29 @@ def login():
                 # Return search page
                 return redirect(url_for("search"))
             else:
-                return render_template("error.html", message="Password is incorrect.")
+                return render_template("alert.html", alert="Error", message="Password is incorrect.", returnLocation="/")
         else:
-            return render_template("error.html", message="Username does not exist.")
+            return render_template("alert.html", alert="Error", message="Username does not exist.", returnLocation="/")
     else:
-        return render_template("error.html", message="Username does not exist.")
+        return render_template("alert.html", alert="Error", message="Username does not exist.", returnLocation="/")
 
-@app.route("/logout", methods=["POST"])
+@app.route("/logout")
 def logout():
     # Unset the user's session
     if session.get("userId") is None:
         session["userId"] = 0
     else:
         session["userId"] = 0
-    return render_template("loggedOut.html")
+    return render_template("alert.html", alert="Success", message="You are logged out.", returnLocation="/")
 
 @app.route("/search", methods=["POST", "GET"])
 def search():
+    # Retrieve user info if a user is signed in
+    if session.get("userId") is None:
+        session["userId"] = 0
+    userInfo=[]
+    if engine.dialect.has_table(engine, "users"):
+        userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
     if request.method == "POST":
         # Get search criteria from form, stripping leading and trailing spaces
         isbn = request.form.get("isbn").strip()
@@ -114,7 +120,7 @@ def search():
         author = request.form.get("author").strip()
         # If user entered no criteria, return a message
         if isbn is "" and title is "" and author is "":
-            return render_template("search.html", message="Please enter a search criteria.")
+            return render_template("search.html", message="Please enter a search criteria.", userInfo=userInfo)
         # Query for criteria
         isbnQuery = []
         titleQuery = []
@@ -133,29 +139,31 @@ def search():
                                         {"author": "%"+author.lower()+"%"}).fetchall()
         # If the searching returned empty, return a message
         if not isbnQuery and not titleQuery and not authorQuery:
-            return render_template("search.html", message="Your search returned no results.")
+            return render_template("search.html", message="Your search returned no results.", userInfo=userInfo)
         else:
-            return render_template("search.html", isbnQuery=isbnQuery, titleQuery=titleQuery, authorQuery=authorQuery)
+            return render_template("search.html", isbnQuery=isbnQuery, titleQuery=titleQuery, authorQuery=authorQuery, userInfo=userInfo)
     # if request method was GET or anything else besides POST
     else:
-        return render_template("search.html")
+        return render_template("search.html", userInfo=userInfo)
 
 @app.route("/book/<int:bookId>", methods=["POST", "GET"])
 def book(bookId):
+    # Retrieve user info if a user is signed in
+    if session.get("userId") is None:
+        session["userId"] = 0
+    userInfo=[]
+    if engine.dialect.has_table(engine, "users"):
+        userInfo = db.execute("SELECT * FROM users WHERE id = :id", {"id": session["userId"]}).fetchone()
+    # If request method was POST
     if request.method == "POST":
-        # Retrieve the session "userId" to see who is signed in
-        if session.get("userId") is None:
-            session["userId"] = 0
         # If a user isn't signed in, return a must-sign-in error page
         if session["userId"] == 0:
-            return render_template("reviewAlert.html", message="Please sign in to review this book.",
-                                    alert="Error", bookId=bookId)
+            return render_template("alert.html", alert="Error", message="Please sign in to review this book.", returnLocation=f"/book/{bookId}")
         # If user already reviewed this book, return an error page
         if engine.dialect.has_table(engine, "reviews"):
             if db.execute("SELECT * FROM reviews WHERE bookId = :bookId AND reviewer = :reviewer",
                             {"bookId": bookId, "reviewer": session["userId"]}).rowcount != 0:
-                return render_template("reviewAlert.html", message="You already reviewed this book.",
-                                        alert="Error", bookId=bookId)
+                return render_template("alert.html", alert="Error", message="You already reviewed this book.", returnLocation=f"/book/{bookId}")
         # Insert new review into database; create a reviews table first if it doesn't exist already
         if not engine.dialect.has_table(engine, "reviews"):
             metadata = MetaData(engine)
@@ -172,8 +180,7 @@ def book(bookId):
         comment = request.form.get("comment").strip()
         # If user neither entered a comment or rating, return an error page
         if rating is None and comment == "":
-            return render_template("reviewAlert.html", message="Please enter a rating and/or comment.",
-                                    alert="Error", bookId=bookId)
+            return render_template("alert.html", alert="Error", message="Please enter a rating and/or comment.", returnLocation=f"/book/{bookId}")
         # Retrieve user's username
         username = ""
         if engine.dialect.has_table(engine, "users"):
@@ -188,15 +195,14 @@ def book(bookId):
                         {"reviewer": session["userId"], "comment": comment, "username": username, "bookid": bookId})
         db.commit()
         # Return an alert page that review was successfully submitted
-        return render_template("reviewAlert.html", message="Your review has been submitted.",
-                                alert="Success", bookId=bookId)
+        return render_template("alert.html", alert="Success", message="Your review has been submitted.", returnLocation=f"/book/{bookId}")
     # If request method was GET or anything else besides POST
     else:
         # Retrieve book information
         bookInfo = db.execute("SELECT * FROM books WHERE id = :bookId", {"bookId": bookId}).fetchone()
         # If book is not in database, return a book-unavailable error
         if bookInfo is None:
-            return render_template("error.html", message="That book is unavailable.")
+            return render_template("alert.html", alert="Error", message="That book is unavailable.", returnLocation="/search")
         # Retrieve user reviews for the book
         userReviews = []
         if engine.dialect.has_table(engine, "reviews"):
@@ -207,10 +213,10 @@ def book(bookId):
         if res.status_code == 200:
             goodReadsData = json.loads(res.text)
             # Return Goodreads data with book page if api request returned ok
-            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, goodReadsData=goodReadsData)
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, goodReadsData=goodReadsData, userInfo=userInfo)
         else:
             # Don't return Goodreads data with book page if api request did not return ok
-            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res)
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, userInfo=userInfo)
 
 @app.route("/api/<string:isbn>")
 def isbnApi(isbn):
