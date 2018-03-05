@@ -13,7 +13,7 @@ titleLen = 1000
 authorLen = 50
 nameLen = 30
 usernameLen = 30
-passwordLen = 20
+passwordLen = 500
 commentLen = 1000
 
 def main():

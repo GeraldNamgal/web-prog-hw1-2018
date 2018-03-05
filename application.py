@@ -5,6 +5,7 @@ from flask import Flask, session, render_template, request, redirect, url_for, j
 from flask_session import Session
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -24,7 +25,8 @@ db = scoped_session(sessionmaker(bind=engine))
 # Global variables
 nameLen = 30
 usernameLen = 30
-passwordLen = 20
+passwordLenDb = 500
+passwordLenForm = 20
 commentLen = 1000
 nonUser = 0
 
@@ -64,7 +66,7 @@ def registration():
             Column("id", Integer, primary_key=True),
             Column("name", String(nameLen)),
             Column("username", String(usernameLen), nullable=False),
-            Column("password", String(passwordLen)))
+            Column("password", String(passwordLenDb)))
         metadata.create_all()
         # Check that table was created
         if not engine.dialect.has_table(engine, "users"):
@@ -75,12 +77,14 @@ def registration():
     # If name or password exceed max char length, return error page
     if len(name) > nameLen:
         return render_template("alert.html", alert="Error", message=f"Name must not be more than {nameLen} characters.", returnLocation="/")
-    if len(password) > passwordLen:
-        return render_template("alert.html", alert="Error", message=f"Password must not be more than {passwordLen} characters.", returnLocation="/")
+    if len(password) > passwordLenForm:
+        return render_template("alert.html", alert="Error", message=f"Password must not be more than {passwordLenForm} characters.", returnLocation="/")
+    # Hash password
+    hashPassword = generate_password_hash(password)
     # Inserting new user into the database
     if engine.dialect.has_table(engine, "users"):
-        db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :password)",
-                    {"name": name, "username": username, "password": password})
+        db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :hashPassword)",
+                    {"name": name, "username": username, "hashPassword": hashPassword})
     db.commit()
     # Return registered page after user is registered successfully
     return render_template("alert.html", alert="Success", message="You've registered an account.", returnLocation="/")
@@ -101,7 +105,7 @@ def login():
         if userInfo is not None:
             # Check that password matches database's
             password = request.form.get("password")
-            if userInfo.password == password:
+            if check_password_hash(userInfo.password, password) == True:
                 # Set the session for the user
                 if session.get("userId") is None:
                     session["userId"] = nonUser
