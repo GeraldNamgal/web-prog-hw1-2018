@@ -31,14 +31,12 @@
                 {% endif %}
             </ul>
         </nav>
-
         <div id=bookDetails>
             <h1>{{ book.title }}</h1>
             <h2>Author: {{ book.author }}</h2>
             <h2>Publication Year: {{ book.year }}</h2>
             <h2>ISBN: {{ book.isbn }}</h2>
         </div>
-
         {% if userReviews %}
             <div class="userReviews">
                 <h4 style="text-align:center;font-style:italic">Member Reviews</h4>
@@ -63,14 +61,12 @@
                 <p style="text-align:center">Be the first to review this book.</p>
             </div>
         {% endif %}
-
         {% if userInfo %}
-            <h5>Hello, {{ userInfo.username }}!</h5>
+            <h5 class="greeting">Hello, {{ userInfo.username }}!</h5>
         {% endif %}
-
-        <div>
-            <h6>Enter a review:</h6>
-            <form id="reviewsForm" action="{{ url_for("book", bookId=book.id) }}" method="post">
+        <div id="reviewForm">
+            <h6>Rate the book from 1 (bad) to 5 (excellent):</h6>
+            <form action="{{ url_for("book", bookId=book.id) }}" method="post">
                 <div id="ratingButtons">
                     <input type="radio" name="rating" value="1"> 1
                     <input type="radio" name="rating" value="2"> 2
@@ -78,11 +74,10 @@
                     <input type="radio" name="rating" value="4"> 4
                     <input type="radio" name="rating" value="5"> 5
                 </div>
-                <textarea name="comment" rows="9" cols="70" placeholder="Enter Your Comments Here"></textarea>
+                <textarea name="comment" rows="9" cols="70" placeholder="Comment on the Book Here"></textarea>
                 <button>Submit Review</button>
             </form>
         </div>
-
         {% if goodReadsData %}
             <div class="goodreadsReviews">
                 <h4 style="text-align:center;font-style:italic">Goodreads Reviews</h4>
@@ -103,7 +98,11 @@
                 <p style="text-align:center">No Goodreads reviews found for this book.</p>
             </div>
         {% endif %}
-
-        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn number]" into the URL.</p>
+        <div class="notes">
+            <h6 style="text-decoration:underline">Notes</h6>
+            <ul>
+                <li>To use the ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</li>
+            <ul>
+        </div>
     </body>
 </html>

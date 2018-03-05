@@ -40,6 +40,9 @@ def registration():
     # If username is blank, return error page
     if username == "":
         return render_template("alert.html", alert="Error", message="Please enter a username.", returnLocation="/")
+    # If username exceeds max char count return error page
+    if len(username) > 30:
+        return render_template("alert.html", alert="Error", message="Please enter a username shorter than 31 characters.", returnLocation="/")
     # If username contains spaces, return error page
     if (" " in username) == True:
         return render_template("alert.html", alert="Error", message="Please choose a username without spaces.", returnLocation="/")
@@ -57,9 +60,15 @@ def registration():
             Column("username", String(30)),
             Column("password", String(20)))
         metadata.create_all()
-    # Insert new user's information into table
+    # Retrieve name and password
     name = request.form.get("name")
     password = request.form.get("password")
+    # If name or password exceed max char length, return error page
+    if len(name) > 30:
+        return render_template("alert.html", alert="Error", message="Please enter a name shorter than 31 characters.", returnLocation="/")
+    if len(password) > 20:
+        return render_template("alert.html", alert="Error", message="Please enter a password shorter than 21 characters.", returnLocation="/")
+    # Inserting new user into the database
     db.execute("INSERT INTO users (name, username, password) VALUES (:name, :username, :password)",
                 {"name": name, "username": username, "password": password})
     db.commit()
@@ -181,6 +190,9 @@ def book(bookId):
         # If user neither entered a comment or rating, return an error page
         if rating is None and comment == "":
             return render_template("alert.html", alert="Error", message="Please enter a rating and/or comment.", returnLocation=f"/book/{bookId}")
+        # If comment exceeds max char length, return error page
+        if len(comment) > 500:
+            return render_template("alert.html", alert="Error", message="Please enter a comment shorter than 501 characters.", returnLocation=f"/book/{bookId}")
         # Retrieve user's username
         username = ""
         if engine.dialect.has_table(engine, "users"):

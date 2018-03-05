@@ -56,3 +56,7 @@ th, tr td:nth-child(-n + 2) {
 #bookDetails {
     text-align: center;
 }
+
+#loginAndRegForm, #searchForm, .userReviews, #reviewForm, .goodreadsReviews, .greeting, .notes {
+    margin: 20px 20px 20px 20px;
+}

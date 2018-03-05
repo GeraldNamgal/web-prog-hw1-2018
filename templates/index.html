@@ -21,36 +21,35 @@
                 {% endif %}
             </ul>
         </nav>
-
         <h1>Welcome</h1>
-
         {% if userInfo %}
-            <h5>Hello, {{ userInfo.username }}!</h5>
+            <h5 class="greeting">Hello, {{ userInfo.username }}!</h5>
         {% endif %}
-
         <div id="loginAndRegForm">
             {% if userInfo %}
                 <h6>Register another username:</h6>
             {% else %}
                 <h6>Please sign in or register an account:</h6>
             {% endif %}
-
             {% if not userInfo %}
                 <form id="loginForm" action="{{ url_for("login") }}" method="post">
                     <input type="text" name="username" placeholder="Username">
-                    <input type="text" name="password" placeholder="Password">
+                    <input type="password" name="password" placeholder="Password">
                     <button>Log In</button>
                 </form>
             {% endif %}
-
             <form id="registrationForm" action="{{ url_for("registration") }}" method="post">
                 <input type="text" name="name" placeholder="Enter Your Name">
                 <input type="text" name="username" placeholder="Enter Your Username">
-                <input type="text" name="password" placeholder="Enter Your Password">
+                <input type="password" name="password" placeholder="Enter Your Password">
                 <button>Register Account</button>
             </form>
         </div>
-
-        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</p>
+        <div class="notes">
+            <h6 style="text-decoration:underline">Notes</h6>
+            <ul>
+                <li>To use the ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</li>
+            <ul>
+        </div>
     </body>
 </html>

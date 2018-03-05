@@ -28,13 +28,10 @@
                 {% endif %}
             </ul>
         </nav>
-
         <h1>Search</h1>
-
         {% if userInfo %}
-            <h5>Hello, {{ userInfo.username }}!</h5>
+            <h5 class="greeting">Hello, {{ userInfo.username }}!</h5>
         {% endif %}
-
         <div id="searchForm">
             <h6>Search for a book:</h6>
             <form id="searchForm" action="{{ url_for("search") }}" method="post">
@@ -44,7 +41,6 @@
                 <button>Search</button>
             </form>
         </div>
-
         {% if isbnQuery or titleQuery or authorQuery %}
             <div class="col-4">
                 <div id="bookList">
@@ -66,7 +62,11 @@
         {% else %}
             <p>{{ message }}</p>
         {% endif %}
-
-        <p style="text-align:center">To use our ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</p>
+        <div class="notes">
+            <h6 style="text-decoration:underline">Notes</h6>
+            <ul>
+                <li>To use the ISBN API to find JSON book information, type ".../api/[isbn_number]" into the URL.</li>
+            <ul>
+        </div>
     </body>
 </html>
