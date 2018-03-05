@@ -156,7 +156,7 @@ def search():
             if author is not "":
                 authorQuery = db.execute("SELECT * FROM books WHERE lower(author) LIKE :author",
                                         {"author": "%"+author.lower()+"%"}).fetchall()
-        # If the searching returned empty, return a message
+        # If the searching returned empty, return a message, else return results
         if not isbnQuery and not titleQuery and not authorQuery:
             return render_template("search.html", message="Your search returned no results.", userInfo=userInfo)
         else:
@@ -241,10 +241,10 @@ def book(bookId):
         if res.status_code == 200:
             goodReadsData = json.loads(res.text)
             # Return Goodreads data with book page if api request returned ok
-            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, goodReadsData=goodReadsData, userInfo=userInfo)
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, goodReadsData=goodReadsData, userInfo=userInfo)
         else:
             # Don't return Goodreads data with book page if api request did not return ok
-            return render_template("book.html", book=bookInfo, userReviews=userReviews, res=res, userInfo=userInfo)
+            return render_template("book.html", book=bookInfo, userReviews=userReviews, userInfo=userInfo)
 
 @app.route("/api/<string:isbn>")
 def isbnApi(isbn):
